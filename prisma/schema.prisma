@@ -1,0 +1,66 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model City {
+ id Int @id  @default(autoincrement())
+ name String
+ zones  ParkingZone[]   
+ users  Users[] 
+}
+
+model ParkingZone{
+  id Int @id  @default(autoincrement())
+  name    String
+  cityId  Int
+  city    City  @relation(fields: [cityId], references: [id])
+  parkings Parking[] 
+}
+
+model Parking{
+  id Int @id  @default(autoincrement())
+  name    String
+  address String?
+  coordinates Float[]
+  Capacity Int
+  parkingZoneId Int
+  parkingZone ParkingZone @relation(fields: [parkingZoneId], references: [id])
+  streams Stream[]     
+}
+
+model Stream{
+  id Int @id  @default(autoincrement())
+  name    String
+  coordinates Float[]
+  rtsp_url String
+  auth_user String
+  auth_password String
+  gst_pipeline String
+  parkingId Int
+  parking Parking @relation(fields: [parkingId], references: [id])
+  parkingLots  Parking_lot[] 
+}
+
+model Parking_lot{
+  id Int @id  @default(autoincrement())
+  status    Boolean @default(true)
+  ROI Json
+  streamId Int
+  stream Stream @relation(fields: [streamId], references: [id])
+}
+
+model Users {
+  id Int @id  @default(autoincrement())
+  email   String @unique
+  password String
+  rola String
+  modul String?
+  cityId Int
+  city City @relation(fields: [cityId], references: [id])
+}
