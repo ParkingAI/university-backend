@@ -1,15 +1,19 @@
-import express from "express"
-import cors from "cors"
-import morgan from "morgan"
-import authRouter from "./routers/authRouter.js"
-const app = express()
-app.use(express.json())
-app.use(cors())
-app.use(morgan("common"))
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import { createChannelConnection } from "./config/mqtt.js";
+import authRouter from "./routes/authRouter.js";
+import streamRouter from "./routes/streamRouter.js";
+const app = express();
+export const channel = await createChannelConnection();
+app.use(express.json());
+app.use(cors());
+app.use(morgan("common"));
 
-app.use("/auth", authRouter)
+app.use("/auth", authRouter);
+app.use("/stream", streamRouter);
 
-app.listen(4000 , (err)=>{
-    if(err) console.log(err);
-    console.log("Server running on port 4000")
-})
+app.listen(4000, (err) => {
+  if (err) console.log(err);
+  console.log("Server running on port 4000");
+});
