@@ -23,8 +23,7 @@ const createParkingValidation = [
     }),
   
   body('Capacity')
-    .notEmpty().withMessage('Capacity is required')
-    .isInt({ min: 1 }).withMessage('Capacity must be a positive integer'),
+    .notEmpty().withMessage('Capacity is required'),
   
   body('parkingZoneId')
     .notEmpty().withMessage('ParkingZoneId is required')
@@ -43,9 +42,16 @@ const validate = (req, res, next) => {
   next()
 }
 
-parkingRouter.get("/", async (req, res) => {
+parkingRouter.get("/:cityId", async (req, res) => {
+  const {cityId} = req.params
     try {
-        const parkings = await prisma.parking.findMany()
+            const parkings = await prisma.parking.findMany({
+            where: {
+                parkingZone: {  
+                    cityId: parseInt(cityId)  
+                }
+            }
+        })
         return res.status(200).json(parkings)
 
     } catch (err) {
@@ -54,7 +60,7 @@ parkingRouter.get("/", async (req, res) => {
 })
 
 
-parkingRouter.get("/:id", async (req, res) => {
+parkingRouter.get("/single/:id", async (req, res) => {
     try {
         const { id } = req.params
 
