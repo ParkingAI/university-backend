@@ -1,11 +1,14 @@
-import express from "express"
-import cors from "cors"
-import morgan from "morgan"
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import { createChannelConnection } from "./config/mqtt.js";
 import cookieParser from "cookie-parser";
 
-import authRouter from "./routers/authRouter.js"
-const app = express()
-app.use(express.json())
+import authRouter from "./routes/authRouter.js";
+import streamRouter from "./routes/streamRouter.js";
+const app = express();
+export const channel = await createChannelConnection();
+app.use(express.json());
 
 
 app.use((err, req, res, next) => {
@@ -26,12 +29,13 @@ app.use(
   })
 );
 
-app.use(cookieParser());
-app.use(morgan("common"))
+app.use(cookieParser());;
+app.use(morgan("common"));
 
-app.use("/auth", authRouter)
+app.use("/auth", authRouter);
+app.use("/stream", streamRouter);
 
-app.listen(4000 , (err)=>{
-    if(err) console.log(err);
-    console.log("Server running on port 4000")
-})
+app.listen(4000, (err) => {
+  if (err) console.log(err);
+  console.log("Server running on port 4000");
+});
