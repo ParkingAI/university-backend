@@ -6,10 +6,13 @@ import cookieParser from "cookie-parser";
 
 import authRouter from "./routes/authRouter.js";
 import streamRouter from "./routes/streamRouter.js";
+import parkingRouter from "./routes/parkingRouter.js";
+
+
 const app = express();
 export const channel = await createChannelConnection();
-app.use(express.json());
 
+app.use(express.json());
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -34,6 +37,7 @@ app.use(morgan("common"));
 
 app.use("/auth", authRouter);
 app.use("/stream", streamRouter);
+app.use("/parking",parkingRouter);
 
 app.listen(4000, (err) => {
   if (err) console.log(err);
