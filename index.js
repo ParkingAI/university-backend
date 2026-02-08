@@ -8,7 +8,7 @@ import authRouter from "./routes/authRouter.js";
 import streamRouter from "./routes/streamRouter.js";
 import parkingLotRouter from "./routes/parkingLotRouter.js";
 import parkingRouter from "./routes/parkingRouter.js";
-
+import webhookRouter from "./routes/webhook.js";
 const app = express();
 export const channel = await createChannelConnection();
 
@@ -38,7 +38,7 @@ app.use("/auth", authRouter);
 app.use("/stream", streamRouter);
 app.use("/parking-lot", parkingLotRouter);
 app.use("/parking", parkingRouter);
-
+app.use("/webhook", webhookRouter)
 app.listen(4000, (err) => {
   if (err) console.log(err);
   console.log("Server running on port 4000");
