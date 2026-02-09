@@ -10,7 +10,7 @@ async function sendCeleryTask(taskName, args, queueName) {
     const connection = await amqplib.connect(process.env.RABBITMQ);
     const channel = await connection.createChannel();
 
-    await channel.assertQueue(queueName, { durable: false });
+    await channel.assertQueue(queueName, { durable: true });
     
     const taskMessage = {
         task: taskName,

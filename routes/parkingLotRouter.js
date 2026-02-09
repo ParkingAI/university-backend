@@ -30,4 +30,65 @@ parkingLotRouter.post(
   },
 );
 
+
+
+// update parking lot status
+parkingLotRouter.patch('/status/:streamId', async (req, res) => {
+  try {
+    const { streamId } = req.params;
+    const { free, occupied } = req.body;
+
+    const stream = await prisma.stream.findUnique({
+      where: { id: parseInt(streamId) }
+    });
+
+    if (!stream) {
+      return res.status(404).json({
+        error: 'Stream not found',
+      });
+    }
+
+    const updateFree = prisma.parking_lot.updateMany({
+      where: {
+        id: { in: free },
+        streamId: parseInt(streamId)
+      },
+      data: {
+        status: true 
+      }
+    });
+
+    const updateOccupied = prisma.parking_lot.updateMany({
+      where: {
+        id: { in: occupied },
+        streamId: parseInt(streamId)
+      },
+      data: {
+        status: false  
+      }
+    });
+
+    const [freeResult, occupiedResult] = await prisma.$transaction([
+      updateFree,
+      updateOccupied
+    ]);
+
+    res.json({
+      message: 'Parking lot status updated successfully',
+      streamId: parseInt(streamId),
+      updated: {
+        free: freeResult.count,
+        occupied: occupiedResult.count,
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
 export default parkingLotRouter;
