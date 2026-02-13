@@ -24,9 +24,10 @@ model ParkingZone{
 model Parking{
   id Int @id  @default(autoincrement())
   name    String
-  address String?
+  address String
   coordinates Float[]
   Capacity Int
+  type String
   parkingZoneId Int
   parkingZone ParkingZone @relation(fields: [parkingZoneId], references: [id])
   streams Stream[]     
@@ -48,6 +49,7 @@ model Stream{
   auth_user String
   auth_password String
   gst_pipeline String
+  lastFrameUrl String @map("last_frame_url")
   parkingId Int
   updated_at DateTime @updatedAt
   parking Parking @relation(fields: [parkingId], references: [id])
@@ -58,6 +60,7 @@ model Parking_lot{
   id Int @id  @default(autoincrement())
   status    Boolean @default(false) 
   ROI Json
+  statusImages Json @map("status_images")
   streamId Int
   stream Stream @relation(fields: [streamId], references: [id])
 }
@@ -67,7 +70,7 @@ model Users {
   email   String @unique
   password String
   rola String
-  modul String?
+  modul String
   cityId Int
   city City @relation(fields: [cityId], references: [id])
 }

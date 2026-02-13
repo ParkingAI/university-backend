@@ -47,23 +47,6 @@ const validate = (req, res, next) => {
   next();
 };
 
-// parkingRouter.get("/:cityId", async (req, res) => {
-//   const {cityId} = req.params
-//     try {
-//             const parkings = await prisma.parking.findMany({
-//             where: {
-//                 parkingZone: {
-//                     cityId: parseInt(cityId)
-//                 }
-//             }
-//         })
-//         return res.status(200).json(parkings)
-
-//     } catch (err) {
-//         return res.status(500).send({ "message": err.message })
-//     }
-// })
-
 parkingRouter.get(
   "/:cityId",
   [param("cityId").isInt({ min: 1 }).toInt()],
@@ -81,11 +64,12 @@ parkingRouter.get(
         return res.status(404).json({ message: "City Not Found" });
       }
       const data =
-        await prisma.$queryRaw`SELECT "Parking"."id", "Parking"."name", "Parking"."address", "Parking"."coordinates", "Parking"."Capacity", "ParkingZone"."name" AS "zone", COUNT(CASE WHEN "Parking_lot"."status" = true THEN 1 END)::int AS "free", COUNT(CASE WHEN "Parking_lot"."status" = false THEN 1 END)::int AS "occupied",   
+        await prisma.$queryRaw`SELECT "Parking"."id", "Parking"."name", "Parking"."address", "Parking"."coordinates", "Parking"."Capacity", "ParkingZone"."name" AS "zone", "Parking"."type", COUNT(CASE WHEN "Parking_lot"."status" = true THEN 1 END)::int AS "free", COUNT(CASE WHEN "Parking_lot"."status" = false THEN 1 END)::int AS "occupied",   
         jsonb_agg(
           jsonb_build_object(
             'id', "Parking_lot"."id",
-            'status', "Parking_lot"."status"
+            'status', "Parking_lot"."status",
+            'statusImages', "Parking_lot"."status_images"
           )
           ORDER BY "Parking_lot"."id" ASC
         ) AS parking_lots
