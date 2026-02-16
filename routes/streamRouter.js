@@ -110,6 +110,34 @@ streamRouter.post(
   },
 );
 
+streamRouter.get(
+  "/:cityId",
+  [param("cityId").isInt({ min: 1 }).toInt()],
+  async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      return res.status(400).json({ message: result.array() });
+    }
+    const { cityId } = req.params;
+    try {
+      const streams = await prisma.stream.findMany({
+        where: {
+          parking: {
+            parkingZone: {
+              cityId: cityId,
+            },
+          },
+        },
+      });
+      return res.json(streams);
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: "Streams fetch server error" });
+    }
+  },
+);
+
 streamRouter.patch(
   "/:streamId",
   [
