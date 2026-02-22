@@ -36,6 +36,7 @@ parkingLotRouter.post(
 parkingLotRouter.patch('/status', async (req, res) => {
   try {
     const { free, occupied } = req.body;
+    console.log(req.body)
 
     const updateFree = prisma.parking_lot.updateMany({
       where: {id: { in: free }},
@@ -51,7 +52,8 @@ parkingLotRouter.patch('/status', async (req, res) => {
       updateFree,
       updateOccupied
     ]);
-
+    
+   
     return res.status(204).json({
       message: 'Parking lot status updated successfully',
       updated: {

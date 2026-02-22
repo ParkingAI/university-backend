@@ -9,6 +9,7 @@ cityRouter.get("/", async (req, res) => {
     const cities = await prisma.city.findMany({
       orderBy: { id: "asc" },
     });
+    
     return res.status(200).json(cities);
   } catch (err) {
     return res.status(500).json({ message: "Get cities server error" });
