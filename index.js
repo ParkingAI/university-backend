@@ -10,6 +10,7 @@ import parkingLotRouter from "./routes/parkingLotRouter.js";
 import parkingRouter from "./routes/parkingRouter.js";
 import webhookRouter from "./routes/webhook.js";
 import cityRouter from "./routes/cityRouter.js";
+import parkingSSERouter from "./routes/parkingSSE.js";
 const app = express();
 export const channel = await createChannelConnection();
 
@@ -41,6 +42,7 @@ app.use("/parking-lot", parkingLotRouter);
 app.use("/parking", parkingRouter);
 app.use("/webhook", webhookRouter);
 app.use("/city", cityRouter);
+app.use("/parking-sse", parkingSSERouter);
 
 app.listen(8080, (err) => {
   if (err) console.log(err);
