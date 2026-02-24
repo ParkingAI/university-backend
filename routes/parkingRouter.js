@@ -75,12 +75,11 @@ parkingRouter.get(
         ) AS parking_lots
         FROM "Parking" INNER JOIN "ParkingZone" ON "Parking"."parkingZoneId" =  "ParkingZone"."id" INNER JOIN "Stream" ON "Parking"."id" = "Stream"."parkingId" INNER JOIN "Parking_lot" ON "Stream". "id" = "Parking_lot"."streamId"
         WHERE "ParkingZone"."cityId" = ${cityId}
-        GROUP BY "Parking"."id", "Parking"."name", "Parking"."address", "Parking"."coordinates", "Parking"."Capacity", "ParkingZone"."name"
+        GROUP BY "Parking"."id", "Parking"."name", "Parking"."address", "Parking"."coordinates", "Parking"."Capacity", "ParkingZone"."name", "Parking"."type"
         ORDER BY "Parking"."id" ASC
         `;
       return res.status(200).json(data);
     } catch (err) {
-      console.log(err.message);
       return res
         .status(500)
         .json({ message: "Get city parkings Server Error" });

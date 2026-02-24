@@ -1,9 +1,7 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-import { createChannelConnection } from "./config/mqtt.js";
 import cookieParser from "cookie-parser";
-
 import authRouter from "./routes/authRouter.js";
 import streamRouter from "./routes/streamRouter.js";
 import parkingLotRouter from "./routes/parkingLotRouter.js";
@@ -11,9 +9,17 @@ import parkingRouter from "./routes/parkingRouter.js";
 import webhookRouter from "./routes/webhook.js";
 import cityRouter from "./routes/cityRouter.js";
 import parkingSSERouter from "./routes/parkingSSE.js";
+import reservationRouter from "./routes/reservationRouter.js";
+import { stripeWebhookHandler } from "./controllers/stripeWebhook.controller.js";
+
 import streamSSERouter from "./routes/streamSSE.js";
 const app = express();
-export const channel = await createChannelConnection();
+
+app.post(
+  "/webhook/stripe",
+  express.raw({ type: "application/json" }),
+  stripeWebhookHandler,
+);
 
 app.use(express.json());
 
@@ -44,6 +50,7 @@ app.use("/parking", parkingRouter);
 app.use("/webhook", webhookRouter);
 app.use("/city", cityRouter);
 app.use("/parking-sse", parkingSSERouter);
+app.use("/reservation", reservationRouter);
 app.use("/stream-sse", streamSSERouter);
 
 app.listen(8080, (err) => {

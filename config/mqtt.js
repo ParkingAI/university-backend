@@ -1,13 +1,23 @@
 import { connect } from "amqplib";
 import "dotenv/config";
-export const createChannelConnection = async () => {
+
+let channel = null;
+
+export const getChannel = async () => {
+  if (channel) return channel;
   try {
     const connection = await connect(process.env.RABBITMQ);
-    const channel = await connection.createChannel();
-    await channel.assertQueue("rtsp.novigrad", { durable: true }); //trenutno
+    channel = await connection.createChannel();
+
+    connection.on("error", () => {
+      channel = null;
+    });
+    connection.on("close", () => {
+      channel = null;
+    });
+
     return channel;
   } catch (err) {
-    console.log(err.message);
-    //Loggati u Sentry
+    throw err;
   }
 };

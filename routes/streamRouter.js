@@ -2,10 +2,8 @@ import express from "express";
 import { body, oneOf, param, query, validationResult } from "express-validator";
 import prisma from "../prisma.js";
 import bcrypt from "bcrypt";
-import { channel } from "../index.js";
+import { getChannel } from "../config/mqtt.js";
 const streamRouter = express.Router();
-
-//TO DO: Use prisma erros in catch block for 404 case, instead of the current way of querying database to chech if resource exists
 
 streamRouter.post(
   "/",
@@ -23,6 +21,12 @@ streamRouter.post(
     if (!result.isEmpty()) {
       return res.status(400).json({ message: result.array() });
     }
+    const referenceExists = await prisma.parking.findUnique({
+      where: { id: req.body.parkingId },
+    });
+    if (!referenceExists) {
+      return res.status(404).json({ message: "Parking Not Found" });
+    }
     const queryData = {
       name: req.body.name,
       coordinates: req.body.coordinates,
@@ -35,17 +39,11 @@ streamRouter.post(
     try {
       const authPasswordHashed = await bcrypt.hash(queryData.auth_password, 10);
       queryData.auth_password = authPasswordHashed;
-      const referenceExists = await prisma.parking.findUnique({
-        where: { id: req.body.parkingId },
-      });
-      if (!referenceExists) {
-        return res.status(404).json({ message: "Parking Not Found" });
-      }
       const stream = await prisma.stream.create({ data: queryData });
       delete stream.auth_password;
       return res.status(201).json(stream);
     } catch (error) {
-      return res.status(500).json({ message: "Stream creation server error" });
+      return res.status(500).json({ message: "Stream creation Server Error" });
     }
   },
 );
@@ -67,32 +65,31 @@ streamRouter.post(
     const { streamId } = req.params;
     const { action } = req.query;
     try {
-      const streamExists = await prisma.parking.findUnique({
+      const stream = await prisma.stream.findUnique({
         where: { id: streamId },
+        include:
+          action === "create"
+            ? {
+                parkingLots: {
+                  select: {
+                    id: true,
+                    ROI: true,
+                  },
+                },
+              }
+            : undefined,
       });
-      if (!streamExists) {
+      if (!stream) {
         return res.status(404).json({ message: "Stream Not Found" });
       }
-      let microservicePayload = { id: streamId };
+      const microservicePayload = { id: streamId };
       if (action === "create") {
-        const streamData = await prisma.stream.findUnique({
-          where: { id: streamId },
-          include: {
-            parkingLots: {
-              select: {
-                id: true,
-                ROI: true,
-              },
-            },
-          },
-        });
-        microservicePayload = {
-          ...microservicePayload,
-          gst_pipeline: streamData.gst_pipeline,
-          parkingId: streamData.parkingId,
-          parkingLots: streamData.parkingLots,
-        };
+        microservicePayload.gst_pipeline = stream.gst_pipeline;
+        microservicePayload.parkingId = stream.parkingId;
+        microservicePayload.parkingLots = stream.parkingLots;
       }
+      const channel = await getChannel();
+      channel.assertQueue("rtsp.novigrad", { durable: true });
       channel.sendToQueue(
         "rtsp.novigrad",
         Buffer.from(
@@ -100,12 +97,12 @@ streamRouter.post(
         ),
       );
       return res.status(201).json({
-        message: `Control ${action} send for stream with ID ${streamId}`,
+        message: `Stream ${streamId}: ${action} signal sent`,
       });
     } catch (err) {
       return res
         .status(500)
-        .json({ message: `Stream control ${action} server error` });
+        .json({ message: `Stream controller Server Error` });
     }
   },
 );
@@ -131,9 +128,7 @@ streamRouter.get(
       });
       return res.json(streams);
     } catch (err) {
-      return res
-        .status(500)
-        .json({ message: "Streams fetch server error" });
+      return res.status(500).json({ message: "Streams fetch server error" });
     }
   },
 );
@@ -157,10 +152,10 @@ streamRouter.patch(
     const { streamId } = req.params;
     const { status } = req.body;
     try {
-      const checkStream = await prisma.stream.findUnique({
+      const referenceExists = await prisma.stream.findUnique({
         where: { id: streamId },
       });
-      if (!checkStream) {
+      if (!referenceExists) {
         return res.status(404).json({ message: "Stream Not Found" });
       }
       await prisma.stream.update({
@@ -169,8 +164,7 @@ streamRouter.patch(
       });
       return res.status(204).send();
     } catch (err) {
-      console.log(err.message);
-      return res.status(500).json({ message: "Stream update server error" });
+      return res.status(500).json({ message: "Stream update Server Error" });
     }
   },
 );

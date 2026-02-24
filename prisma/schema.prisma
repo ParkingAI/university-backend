@@ -1,36 +1,38 @@
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
 }
 
 model City {
- id Int @id  @default(autoincrement())
- name String
- coordinates Float[]
- zones  ParkingZone[]   
- users  Users[] 
-}
-
-model ParkingZone{
-  id Int @id  @default(autoincrement())
-  name    String
-  cityId  Int
-  city    City  @relation(fields: [cityId], references: [id])
-  parkings Parking[] 
-}
-
-model Parking{
-  id Int @id  @default(autoincrement())
-  name    String
-  address String
+  id          Int           @id @default(autoincrement())
+  name        String
   coordinates Float[]
-  Capacity Int
-  type String
+  zones       ParkingZone[]
+  users       Users[]
+}
+
+model ParkingZone {
+  id        Int       @id @default(autoincrement())
+  name      String
+  hourPrice Decimal @db.Decimal(10,2)  @map("hour_price")
+  cityId    Int
+  city      City      @relation(fields: [cityId], references: [id])
+  parkings  Parking[]
+}
+
+model Parking {
+  id            Int         @id @default(autoincrement())
+  name          String
+  address       String
+  coordinates   Float[]
+  Capacity      Int
+  type          String
   parkingZoneId Int
-  parkingZone ParkingZone @relation(fields: [parkingZoneId], references: [id])
-  streams Stream[]     
+  parkingZone   ParkingZone @relation(fields: [parkingZoneId], references: [id])
+  streams       Stream[]
 }
 
 enum StreamStatus {
@@ -40,37 +42,55 @@ enum StreamStatus {
   ERROR
 }
 
-model Stream{
-  id Int @id  @default(autoincrement())
-  name    String
-  status StreamStatus @default(INACTIVE)
-  coordinates Float[]
-  rtsp_url String
-  auth_user String
+model Stream {
+  id            Int           @id @default(autoincrement())
+  name          String
+  status        StreamStatus  @default(INACTIVE)
+  coordinates   Float[]
+  rtsp_url      String
+  auth_user     String
   auth_password String
-  gst_pipeline String
-  lastFrameUrl String @map("last_frame_url")
-  parkingId Int
-  updated_at DateTime @updatedAt
-  parking Parking @relation(fields: [parkingId], references: [id])
-  parkingLots  Parking_lot[] 
+  gst_pipeline  String
+  lastFrameUrl  String        @map("last_frame_url")
+  parkingId     Int
+  updated_at    DateTime      @updatedAt
+  parking       Parking       @relation(fields: [parkingId], references: [id])
+  parkingLots   Parking_lot[]
 }
 
-model Parking_lot{
-  id Int @id  @default(autoincrement())
-  status    Boolean @default(false) 
-  ROI Json
-  statusImages Json @map("status_images")
-  streamId Int
-  stream Stream @relation(fields: [streamId], references: [id])
+model Parking_lot {
+  id           Int           @id @default(autoincrement())
+  status       Boolean       @default(false)
+  ROI          Json
+  statusImages Json          @map("status_images")
+  streamId     Int
+  stream       Stream        @relation(fields: [streamId], references: [id])
+  reservations Reservation[]
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+model Reservation {
+  id               Int           @id @default(autoincrement())
+  parkingLotId     Int           @map("parking_lot_id")
+  reservationFrom  DateTime      @map("reservation_from")
+  reservationUntil DateTime      @map("reservation_until")
+  price            Decimal @db.Decimal(10,2)
+  paymentStatus    PaymentStatus @default(PENDING) @map("payment_status")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  parkingLot       Parking_lot   @relation(fields: [parkingLotId], references: [id])
 }
 
 model Users {
-  id Int @id  @default(autoincrement())
-  email   String @unique
+  id       Int    @id @default(autoincrement())
+  email    String @unique
   password String
-  rola String
-  modul String
-  cityId Int
-  city City @relation(fields: [cityId], references: [id])
+  rola     String
+  modul    String
+  cityId   Int
+  city     City   @relation(fields: [cityId], references: [id])
 }

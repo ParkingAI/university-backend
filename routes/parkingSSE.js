@@ -20,12 +20,13 @@ parkingSSERouter.get(
     const { cityId } = req.params;
 
     try {
-      const cityExists = await prisma.city.findUnique({ where: { id: cityId } });
+      const cityExists = await prisma.city.findUnique({
+        where: { id: cityId },
+      });
       if (!cityExists) {
         return res.status(404).json({ message: "City Not Found" });
       }
     } catch (err) {
-      console.error(err.message);
       return res.status(500).json({ message: "Server Error" });
     }
 
@@ -35,10 +36,12 @@ parkingSSERouter.get(
     res.flushHeaders();
 
     const heartbeats = setInterval(() => {
-    res.write(": ping\n\n");
-  }, 10000);
+      res.write(": ping\n\n");
+    }, 15000);
 
-    const pgClient = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    const pgClient = new pg.Client({
+      connectionString: process.env.DATABASE_URL,
+    });
 
     try {
       await pgClient.connect();
@@ -49,9 +52,8 @@ parkingSSERouter.get(
 
     pgClient.on("notification", async (message) => {
       try {
-         res.write(`data: ${message.payload}\n\n`);
-      } catch (err) {
-      }
+        res.write(`data: ${message.payload}\n\n`);
+      } catch (err) {}
     });
 
     pgClient.on("error", (err) => {
@@ -105,7 +107,9 @@ parkingSSERouter.get(
       res.write(": ping\n\n");
     }, 10000);
 
-    const pgClient = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    const pgClient = new pg.Client({
+      connectionString: process.env.DATABASE_URL,
+    });
 
     try {
       await pgClient.connect();

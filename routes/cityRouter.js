@@ -9,10 +9,10 @@ cityRouter.get("/", async (req, res) => {
     const cities = await prisma.city.findMany({
       orderBy: { id: "asc" },
     });
-    
+
     return res.status(200).json(cities);
   } catch (err) {
-    return res.status(500).json({ message: "Get cities server error" });
+    return res.status(500).json({ message: "Get cities Server Error" });
   }
 });
 
@@ -26,37 +26,18 @@ cityRouter.get(
     }
     const { id } = req.params;
     try {
-      const referenceExists = await prisma.city.findUnique({
-        where: { id: id },
-      });
-      if (!referenceExists) {
+      const city =
+        await prisma.$queryRaw`SELECT "City"."id", "City"."name", "City"."coordinates", COUNT (DISTINCT "ParkingZone"."id")::int AS "totalZones", COUNT (DISTINCT "Parking"."id")::int AS "totalParkings"
+        FROM "City"
+        INNER JOIN "ParkingZone" ON "City"."id" = "ParkingZone"."cityId" LEFT JOIN "Parking" ON "ParkingZone"."id" = "Parking"."parkingZoneId"
+        WHERE "City"."id" = ${id}
+        GROUP BY "City"."id", "City"."name", "City"."coordinates";`;
+      if (city.length === 0) {
         return res.status(404).json({ message: "City Not Found" });
       }
-      const [city, cityZones, cityParkings] = await Promise.all([
-        prisma.city.findUnique({
-          where: { id: id },
-        }),
-        prisma.parkingZone.count({
-          where: { cityId: id },
-        }),
-        prisma.parking.count({
-          where: {
-            parkingZone: {
-              cityId: id,
-            },
-          },
-        }),
-      ]);
-      const cityResponseData = {
-        ...city,
-        metadata: {
-          totalZones: cityZones,
-          totalParkings: cityParkings,
-        },
-      };
-      return res.status(200).json(cityResponseData);
+      return res.status(200).json(city[0]);
     } catch (err) {
-      return res.status(500).json({ message: "Get city server error" });
+      return res.status(500).json({ message: "Get city Server Error" });
     }
   },
 );

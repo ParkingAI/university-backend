@@ -5,7 +5,6 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
@@ -30,10 +29,10 @@
     "express": "^5.2.1",
     "express-validator": "^7.3.1",
     "jsonwebtoken": "^9.0.3",
-    "express-validator": "^7.3.1",
     "morgan": "^1.10.1",
     "nodemon": "^3.1.11",
-    "pg": "^8.18.0"
+    "pg": "^8.18.0",
+    "stripe": "^20.3.1"
   },
   "devDependencies": {
     "prisma": "^7.3.0"
