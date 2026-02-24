@@ -35,32 +35,25 @@ parkingLotRouter.post(
 // update parking lot status
 parkingLotRouter.patch('/status', async (req, res) => {
   try {
-    const { free, occupied } = req.body;
-    console.log(req.body)
+    const { free, occupied, lastFrameUrl } = req.body;
+    const streamId = req.body.streamId ? parseInt(req.body.streamId) : null;
 
-    const updateFree = prisma.parking_lot.updateMany({
-      where: {id: { in: free }},
-      data: {status: true}
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        UPDATE "Parking_lot"
+        SET status = (id = ANY(${free}::int[]))
+        WHERE id = ANY(${[...free, ...occupied]}::int[])
+      `;
 
-    const updateOccupied = prisma.parking_lot.updateMany({
-      where: {id: { in: occupied }},
-      data: {status: false}
-    });
-
-    const [freeResult, occupiedResult] = await prisma.$transaction([
-      updateFree,
-      updateOccupied
-    ]);
-    
-   
-    return res.status(204).json({
-      message: 'Parking lot status updated successfully',
-      updated: {
-        free: freeResult.count,
-        occupied: occupiedResult.count,
+      if (streamId && lastFrameUrl) {
+        await tx.stream.update({
+          where: { id: streamId },
+          data: { lastFrameUrl },
+        });
       }
     });
+
+    return res.status(204).send();
 
   } catch (error) {
     console.error(error);

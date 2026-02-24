@@ -84,7 +84,7 @@ authRouter.post("/login", loginValidation, validate,  async (req, res, next) => 
     const token = jwt.sign(
       { sub: user.id, rola: user.rola, modul: user.modul, cityId: user.cityId },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "12h" }
     )
 
     res.cookie(COOKIE_NAME, token, {
@@ -92,7 +92,7 @@ authRouter.post("/login", loginValidation, validate,  async (req, res, next) => 
       secure: false,   
       sameSite: "lax", 
       domain: process.env.DOMAIN,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 12 * 60 * 60 * 1000,
       path: "/",
     })
 
@@ -111,6 +111,36 @@ authRouter.post("/login", loginValidation, validate,  async (req, res, next) => 
   }
 })
 
+
+authRouter.patch("/password", async (req, res) => {
+  const token = req?.cookies?.sp_user;
+  if (!token) return res.status(401).json({ message: "Not authenticated" });
+
+  let userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.sub;
+  } catch {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+
+  const { newPassword } = req.body;
+  if (!newPassword) {
+    return res.status(400).json({ message: "newPassword is required" });
+  }
+
+  try {
+    const user = await prisma.users.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.users.update({ where: { id: userId }, data: { password: hashed } });
+
+    return res.status(204).send();
+  } catch {
+    return res.status(500).json({ message: "Error while changing password" });
+  }
+});
 
 authRouter.post("/checkuser", async (req, res, next) => {
   const token = req?.cookies?.sp_user;
